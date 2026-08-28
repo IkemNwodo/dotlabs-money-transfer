@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dotlabs-money-transfer-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/moneytransferdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - APP_SCHEDULING_COMMISSION_CRON=0 0 1 * * ?
+      - APP_SCHEDULING_SUMMARY_CRON=0 0 2 * * ?
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - transfer-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dotlabs-money-transfer-db
+    environment:
+      - POSTGRES_DB=moneytransferdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d moneytransferdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transfer-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  transfer-network:
+    driver: bridge

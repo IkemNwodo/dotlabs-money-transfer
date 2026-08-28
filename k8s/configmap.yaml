@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: money-transfer-config
+  labels:
+    app: money-transfer-service
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  APP_SCHEDULING_COMMISSION_CRON: "0 0 1 * * ?"
+  APP_SCHEDULING_SUMMARY_CRON: "0 0 2 * * ?"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service:5432/moneytransferdb"
