@@ -55,11 +55,14 @@ A production-grade Java Spring Boot microservice designed to simulate secure mon
 The service adheres strictly to clean architecture and enterprise patterns:
 * **Layered Architecture**: Clear separation of concerns:
   - `controller`: REST APIs, OpenAPI docs, input validation (`@Valid`).
-  - `service`: Core business logic, balance mutations, commission calculations.
+  - `service`: Service interfaces and `service.impl` package implementations for business logic.
   - `repository`: Spring Data JPA with `JpaSpecificationExecutor` for dynamic queries and `@Lock(LockModeType.PESSIMISTIC_WRITE)` for concurrency isolation.
   - `entity` / `dto`: Encapsulated domain entities and immutable DTO records.
   - `scheduler`: ShedLock-guarded cron workers.
   - `exception`: Centralized `@RestControllerAdvice` exception handler.
+* **Database Versioning (Flyway)**:
+  - `V1__init_schema.sql`: Automated schema creation for accounts, transactions, daily summaries, and ShedLock.
+  - `V2__seed_initial_accounts.sql`: Pre-loaded test accounts and balances.
 * **Design Patterns Employed**:
   - **Strategy & Utility Pattern**: `FeeCalculator` encapsulating financial rounding and capping rules.
   - **Specification Pattern**: `TransactionSpecification` constructing dynamic JPA Criteria predicates.
