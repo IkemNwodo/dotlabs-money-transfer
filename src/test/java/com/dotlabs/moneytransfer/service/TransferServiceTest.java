@@ -48,7 +48,7 @@ class TransferServiceTest {
         senderAccount = Account.builder()
                 .id(1L)
                 .accountNumber("1000000001")
-                .accountHolderName("Alice")
+                .accountHolderName("Emmanuel Ugwueze")
                 .balance(new BigDecimal("10000.00"))
                 .currency(Currency.NGN)
                 .build();
@@ -56,7 +56,7 @@ class TransferServiceTest {
         recipientAccount = Account.builder()
                 .id(2L)
                 .accountNumber("1000000002")
-                .accountHolderName("Bob")
+                .accountHolderName("Ekene iloezumma")
                 .balance(new BigDecimal("5000.00"))
                 .currency(Currency.NGN)
                 .build();

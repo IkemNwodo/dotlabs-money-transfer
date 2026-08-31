@@ -278,7 +278,7 @@ The application automatically seeds test bank accounts on startup:
 
 | Account Number | Account Holder Name | Initial Balance (NGN) | Purpose |
 |---|---|---|---|
-| `1000000001` | Alice Johnson | ₦500,000.00 | Standard high-balance sender |
-| `1000000002` | Bob Smith | ₦250,000.00 | Standard recipient/sender |
-| `1000000003` | Charlie Brown (Low Balance) | ₦50.00 | Testing `INSUFFICIENT FUND` transfers |
+| `1000000001` | Emmanuel Ugwueze | ₦500,000.00 | Standard high-balance sender |
+| `1000000002` | Ekene iloezumma | ₦250,000.00 | Standard recipient/sender |
+| `1000000003` | Ikemefuna Nwodo | ₦50.00 | Testing `INSUFFICIENT FUND` transfers |
 | `1000000004` | DotLabs Treasury | ₦10,000,000.00 | High-volume corporate account |
