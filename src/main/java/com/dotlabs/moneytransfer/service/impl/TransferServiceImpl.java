@@ -1,4 +1,4 @@
-package com.dotlabs.moneytransfer.service;
+package com.dotlabs.moneytransfer.service.impl;
 
 import com.dotlabs.moneytransfer.dto.request.TransferRequest;
 import com.dotlabs.moneytransfer.dto.response.TransferResponse;
@@ -9,6 +9,7 @@ import com.dotlabs.moneytransfer.exception.AccountNotFoundException;
 import com.dotlabs.moneytransfer.exception.InvalidTransferException;
 import com.dotlabs.moneytransfer.repository.AccountRepository;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
+import com.dotlabs.moneytransfer.service.TransferService;
 import com.dotlabs.moneytransfer.util.FeeCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,13 +34,9 @@ public class TransferServiceImpl implements TransferService {
         log.info("Processing transfer from account {} to account {} for amount {}",
                 request.getSourceAccountNumber(), request.getDestinationAccountNumber(), request.getAmount());
 
-        // Validate basic inputs
+        // Validate transfer business rules (amount validation is already handled by Jakarta Bean Validation on TransferRequest)
         if (request.getSourceAccountNumber().trim().equalsIgnoreCase(request.getDestinationAccountNumber().trim())) {
             throw new InvalidTransferException("Source and destination accounts cannot be the same");
-        }
-
-        if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidTransferException("Transfer amount must be strictly greater than zero");
         }
 
         // Generate or validate transaction reference

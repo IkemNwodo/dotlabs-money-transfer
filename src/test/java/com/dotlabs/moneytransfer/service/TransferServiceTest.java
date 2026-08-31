@@ -10,11 +10,11 @@ import com.dotlabs.moneytransfer.exception.AccountNotFoundException;
 import com.dotlabs.moneytransfer.exception.InvalidTransferException;
 import com.dotlabs.moneytransfer.repository.AccountRepository;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
+import com.dotlabs.moneytransfer.service.impl.TransferServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,7 +48,7 @@ class TransferServiceTest {
         senderAccount = Account.builder()
                 .id(1L)
                 .accountNumber("1000000001")
-                .accountHolderName("Alice")
+                .accountHolderName("Emmanuel Ugwueze")
                 .balance(new BigDecimal("10000.00"))
                 .currency(Currency.NGN)
                 .build();
@@ -56,7 +56,7 @@ class TransferServiceTest {
         recipientAccount = Account.builder()
                 .id(2L)
                 .accountNumber("1000000002")
-                .accountHolderName("Bob")
+                .accountHolderName("Ekene iloezumma")
                 .balance(new BigDecimal("5000.00"))
                 .currency(Currency.NGN)
                 .build();
@@ -135,20 +135,6 @@ class TransferServiceTest {
         assertThatThrownBy(() -> transferService.processTransfer(request))
                 .isInstanceOf(InvalidTransferException.class)
                 .hasMessageContaining("cannot be the same");
-    }
-
-    @Test
-    @DisplayName("Should reject transfer when amount is zero or negative")
-    void testZeroOrNegativeAmountThrows() {
-        TransferRequest request = TransferRequest.builder()
-                .sourceAccountNumber("1000000001")
-                .destinationAccountNumber("1000000002")
-                .amount(BigDecimal.ZERO)
-                .build();
-
-        assertThatThrownBy(() -> transferService.processTransfer(request))
-                .isInstanceOf(InvalidTransferException.class)
-                .hasMessageContaining("greater than zero");
     }
 
     @Test
