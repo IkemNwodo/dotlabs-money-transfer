@@ -42,6 +42,16 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Database Migration with Flyway -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
         <!-- Distributed Scheduling with ShedLock (Kubernetes Multi-Pod safe) -->
         <dependency>
             <groupId>net.javacrumbs.shedlock</groupId>

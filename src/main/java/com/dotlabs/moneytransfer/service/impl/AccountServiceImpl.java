@@ -1,9 +1,10 @@
-package com.dotlabs.moneytransfer.service;
+package com.dotlabs.moneytransfer.service.impl;
 
 import com.dotlabs.moneytransfer.dto.response.AccountResponse;
 import com.dotlabs.moneytransfer.entity.Account;
 import com.dotlabs.moneytransfer.exception.AccountNotFoundException;
 import com.dotlabs.moneytransfer.repository.AccountRepository;
+import com.dotlabs.moneytransfer.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

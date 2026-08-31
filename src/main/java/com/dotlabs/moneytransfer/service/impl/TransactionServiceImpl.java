@@ -1,4 +1,4 @@
-package com.dotlabs.moneytransfer.service;
+package com.dotlabs.moneytransfer.service.impl;
 
 import com.dotlabs.moneytransfer.dto.request.TransactionFilterRequest;
 import com.dotlabs.moneytransfer.dto.response.TransactionResponse;
@@ -6,6 +6,7 @@ import com.dotlabs.moneytransfer.entity.Transaction;
 import com.dotlabs.moneytransfer.exception.MoneyTransferException;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
 import com.dotlabs.moneytransfer.repository.specification.TransactionSpecification;
+import com.dotlabs.moneytransfer.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

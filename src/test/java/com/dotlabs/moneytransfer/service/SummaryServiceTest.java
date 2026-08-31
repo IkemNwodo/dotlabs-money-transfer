@@ -6,6 +6,7 @@ import com.dotlabs.moneytransfer.entity.Transaction;
 import com.dotlabs.moneytransfer.enums.TransactionStatus;
 import com.dotlabs.moneytransfer.repository.DailyTransactionSummaryRepository;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
+import com.dotlabs.moneytransfer.service.impl.SummaryServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
