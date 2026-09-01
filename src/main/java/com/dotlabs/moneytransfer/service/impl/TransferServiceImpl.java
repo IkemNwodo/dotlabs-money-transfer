@@ -1,14 +1,21 @@
 package com.dotlabs.moneytransfer.service.impl;
 
+import com.dotlabs.moneytransfer.dto.request.AuthorizeTransferRequest;
+import com.dotlabs.moneytransfer.dto.request.InitiateTransferRequest;
 import com.dotlabs.moneytransfer.dto.request.TransferRequest;
+import com.dotlabs.moneytransfer.dto.response.InitiateTransferResponse;
 import com.dotlabs.moneytransfer.dto.response.TransferResponse;
 import com.dotlabs.moneytransfer.entity.Account;
 import com.dotlabs.moneytransfer.entity.Transaction;
+import com.dotlabs.moneytransfer.entity.TransferOtpSession;
+import com.dotlabs.moneytransfer.entity.User;
 import com.dotlabs.moneytransfer.enums.TransactionStatus;
 import com.dotlabs.moneytransfer.exception.AccountNotFoundException;
 import com.dotlabs.moneytransfer.exception.InvalidTransferException;
 import com.dotlabs.moneytransfer.repository.AccountRepository;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
+import com.dotlabs.moneytransfer.security.AccountOwnershipValidator;
+import com.dotlabs.moneytransfer.service.OtpService;
 import com.dotlabs.moneytransfer.service.TransferService;
 import com.dotlabs.moneytransfer.util.FeeCalculator;
 import lombok.RequiredArgsConstructor;
@@ -27,19 +34,94 @@ public class TransferServiceImpl implements TransferService {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final AccountOwnershipValidator accountOwnershipValidator;
+    private final OtpService otpService;
 
     @Override
     @Transactional
     public TransferResponse processTransfer(TransferRequest request) {
-        log.info("Processing transfer from account {} to account {} for amount {}",
+        // Enforce account ownership if authenticated user is present
+        accountOwnershipValidator.validateOwnership(request.getSourceAccountNumber());
+        return executeTransfer(request);
+    }
+
+    @Override
+    @Transactional
+    public InitiateTransferResponse initiateTransfer(InitiateTransferRequest request, User authenticatedUser) {
+        log.info("Initiating 2FA transfer from {} to {} for amount {}",
                 request.getSourceAccountNumber(), request.getDestinationAccountNumber(), request.getAmount());
 
-        // Validate transfer business rules (amount validation is already handled by Jakarta Bean Validation on TransferRequest)
+        if (authenticatedUser == null) {
+            throw new InvalidTransferException("Authentication required to initiate transfer");
+        }
+
+        // Verify that the user owns the source account
+        accountOwnershipValidator.validateOwnership(request.getSourceAccountNumber());
+
         if (request.getSourceAccountNumber().trim().equalsIgnoreCase(request.getDestinationAccountNumber().trim())) {
             throw new InvalidTransferException("Source and destination accounts cannot be the same");
         }
 
-        // Generate or validate transaction reference
+        Account sourceAccount = accountRepository.findByAccountNumber(request.getSourceAccountNumber().trim())
+                .orElseThrow(() -> new AccountNotFoundException("Source account not found: " + request.getSourceAccountNumber()));
+
+        accountRepository.findByAccountNumber(request.getDestinationAccountNumber().trim())
+                .orElseThrow(() -> new AccountNotFoundException("Destination account not found: " + request.getDestinationAccountNumber()));
+
+        BigDecimal fee = FeeCalculator.calculateTransactionFee(request.getAmount());
+        BigDecimal billedAmount = FeeCalculator.calculateBilledAmount(request.getAmount(), fee);
+
+        if (sourceAccount.getBalance().compareTo(billedAmount) < 0) {
+            throw new InvalidTransferException("Insufficient funds: available balance is " + sourceAccount.getBalance()
+                    + ", required billed amount is " + billedAmount);
+        }
+
+        TransferOtpSession session = otpService.createTransferOtpSession(authenticatedUser, request, fee, billedAmount);
+
+        return InitiateTransferResponse.builder()
+                .sessionId(session.getSessionId())
+                .sourceAccountNumber(session.getSourceAccountNumber())
+                .destinationAccountNumber(session.getDestinationAccountNumber())
+                .amount(session.getAmount())
+                .transactionFee(fee)
+                .billedAmount(billedAmount)
+                .expiresAt(session.getExpiresAt())
+                .message("OTP has been sent to your registered channel. Please authorize the transfer within 5 minutes.")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public TransferResponse authorizeTransfer(AuthorizeTransferRequest request, User authenticatedUser) {
+        String username = (authenticatedUser != null) ? authenticatedUser.getUsername() : null;
+        log.info("Authorizing transfer session {} for user {}", request.getSessionId(), username);
+
+        // Verify OTP and consume session
+        TransferOtpSession session = otpService.validateAndConsumeOtp(request.getSessionId(), request.getOtpCode(), username);
+
+        // Build internal transfer request from verified session
+        TransferRequest transferRequest = TransferRequest.builder()
+                .sourceAccountNumber(session.getSourceAccountNumber())
+                .destinationAccountNumber(session.getDestinationAccountNumber())
+                .amount(session.getAmount())
+                .description(session.getDescription())
+                .transactionReference(session.getTransactionReference())
+                .build();
+
+        return executeTransfer(transferRequest);
+    }
+
+    /**
+     * Internal atomic transfer execution with deterministic pessimistic locking.
+     */
+    private TransferResponse executeTransfer(TransferRequest request) {
+        log.info("Executing transfer from account {} to account {} for amount {}",
+                request.getSourceAccountNumber(), request.getDestinationAccountNumber(), request.getAmount());
+
+        if (request.getSourceAccountNumber().trim().equalsIgnoreCase(request.getDestinationAccountNumber().trim())) {
+            throw new InvalidTransferException("Source and destination accounts cannot be the same");
+        }
+
         String reference = (request.getTransactionReference() != null && !request.getTransactionReference().trim().isEmpty())
                 ? request.getTransactionReference().trim()
                 : generateReference();
@@ -48,11 +130,10 @@ public class TransferServiceImpl implements TransferService {
             throw new InvalidTransferException("Transaction reference already exists: " + reference);
         }
 
-        // Calculate transaction fee (0.5% capped at 100) and billed amount (amount + fee)
         BigDecimal fee = FeeCalculator.calculateTransactionFee(request.getAmount());
         BigDecimal billedAmount = FeeCalculator.calculateBilledAmount(request.getAmount(), fee);
 
-        // Prevent deadlocks by acquiring pessimistic locks in a consistent alphabetical order
+        // Prevent deadlocks by acquiring pessimistic locks in consistent order
         Account sourceAccount;
         Account destinationAccount;
 
@@ -71,7 +152,7 @@ public class TransferServiceImpl implements TransferService {
                     .orElseThrow(() -> new AccountNotFoundException("Source account not found: " + sourceAccNum));
         }
 
-        // Check for sufficient funds (including transaction fee)
+        // Check sufficient funds
         if (sourceAccount.getBalance().compareTo(billedAmount) < 0) {
             log.warn("Transfer failed due to insufficient funds: Account {} has balance {}, required {}",
                     sourceAccNum, sourceAccount.getBalance(), billedAmount);
@@ -94,7 +175,7 @@ public class TransferServiceImpl implements TransferService {
             return toTransferResponse(savedTx);
         }
 
-        // Execute atomic debit and credit
+        // Atomic debit and credit
         sourceAccount.debit(billedAmount);
         destinationAccount.credit(request.getAmount());
 

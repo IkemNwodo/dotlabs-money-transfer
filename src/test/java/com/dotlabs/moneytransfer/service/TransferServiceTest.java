@@ -10,6 +10,7 @@ import com.dotlabs.moneytransfer.exception.AccountNotFoundException;
 import com.dotlabs.moneytransfer.exception.InvalidTransferException;
 import com.dotlabs.moneytransfer.repository.AccountRepository;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
+import com.dotlabs.moneytransfer.security.AccountOwnershipValidator;
 import com.dotlabs.moneytransfer.service.impl.TransferServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +37,12 @@ class TransferServiceTest {
 
     @Mock
     private TransactionRepository transactionRepository;
+
+    @Mock
+    private AccountOwnershipValidator accountOwnershipValidator;
+
+    @Mock
+    private OtpService otpService;
 
     @InjectMocks
     private TransferServiceImpl transferService;
@@ -89,6 +96,7 @@ class TransferServiceTest {
         assertThat(senderAccount.getBalance()).isEqualByComparingTo("7990.00"); // 10000 - 2010
         assertThat(recipientAccount.getBalance()).isEqualByComparingTo("7000.00"); // 5000 + 2000
 
+        verify(accountOwnershipValidator).validateOwnership("1000000001");
         verify(accountRepository).save(senderAccount);
         verify(accountRepository).save(recipientAccount);
     }

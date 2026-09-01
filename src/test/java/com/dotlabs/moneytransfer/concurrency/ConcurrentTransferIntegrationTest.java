@@ -8,6 +8,7 @@ import com.dotlabs.moneytransfer.enums.TransactionStatus;
 import com.dotlabs.moneytransfer.repository.AccountRepository;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
 import com.dotlabs.moneytransfer.service.TransferService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,10 +41,9 @@ class ConcurrentTransferIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        transactionRepository.deleteAll();
-        accountRepository.deleteAll();
+        cleanTestData();
 
-        // Create two accounts with 50,000.00 each
+        // Create two dedicated test accounts with 50,000.00 each
         Account a1 = Account.builder()
                 .accountNumber(ACC_1)
                 .accountHolderName("Concurrent Test User 1")
@@ -59,6 +59,16 @@ class ConcurrentTransferIntegrationTest {
                 .build();
 
         accountRepository.saveAll(List.of(a1, a2));
+    }
+
+    @AfterEach
+    void tearDown() {
+        cleanTestData();
+    }
+
+    private void cleanTestData() {
+        accountRepository.findByAccountNumber(ACC_1).ifPresent(accountRepository::delete);
+        accountRepository.findByAccountNumber(ACC_2).ifPresent(accountRepository::delete);
     }
 
     @Test
