@@ -1,10 +1,13 @@
 package com.dotlabs.moneytransfer.controller;
 
 import com.dotlabs.moneytransfer.dto.response.DailySummaryResponse;
+import com.dotlabs.moneytransfer.security.CustomUserDetailsService;
+import com.dotlabs.moneytransfer.security.JwtTokenProvider;
 import com.dotlabs.moneytransfer.service.SummaryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -21,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SummaryController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class SummaryControllerTest {
 
     @Autowired
@@ -28,6 +32,12 @@ class SummaryControllerTest {
 
     @MockBean
     private SummaryService summaryService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     @DisplayName("GET /api/v1/summaries/daily - Should return summary metrics")

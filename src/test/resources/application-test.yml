@@ -14,6 +14,12 @@ spring:
     locations: classpath:db/migration
 
 app:
+  jwt:
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    expiration-ms: 86400000
+  otp:
+    expiration-seconds: 300
+    max-attempts: 3
   scheduling:
     commission-cron: "0 0 1 * * ?"
     summary-cron: "0 0 2 * * ?"

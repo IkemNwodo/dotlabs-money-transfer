@@ -3,10 +3,13 @@ package com.dotlabs.moneytransfer.controller;
 import com.dotlabs.moneytransfer.dto.request.TransactionFilterRequest;
 import com.dotlabs.moneytransfer.dto.response.TransactionResponse;
 import com.dotlabs.moneytransfer.enums.TransactionStatus;
+import com.dotlabs.moneytransfer.security.CustomUserDetailsService;
+import com.dotlabs.moneytransfer.security.JwtTokenProvider;
 import com.dotlabs.moneytransfer.service.TransactionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
@@ -25,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TransactionController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class TransactionControllerTest {
 
     @Autowired
@@ -32,6 +36,12 @@ class TransactionControllerTest {
 
     @MockBean
     private TransactionService transactionService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     @DisplayName("GET /api/v1/transactions - Should return paginated list of transactions")

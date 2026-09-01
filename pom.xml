@@ -15,12 +15,13 @@
     <artifactId>money-transfer-service</artifactId>
     <version>1.0.0</version>
     <name>dotlabs-money-transfer</name>
-    <description>DotLabs Money Transfer Simulation Service</description>
+    <description>DotLabs Money Transfer Simulation Service with JWT Auth and OTP 2FA</description>
     
     <properties>
         <java.version>17</java.version>
         <springdoc.version>2.6.0</springdoc.version>
         <shedlock.version>5.16.0</shedlock.version>
+        <jjwt.version>0.12.6</jjwt.version>
     </properties>
     
     <dependencies>
@@ -40,6 +41,29 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- JWT Authentication (JJWT) -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Database Migration with Flyway -->
@@ -94,6 +118,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
