@@ -154,7 +154,7 @@ public class TransferServiceImpl implements TransferService {
 
         // Check sufficient funds
         if (sourceAccount.getBalance().compareTo(billedAmount) < 0) {
-            log.warn("Transfer failed due to insufficient funds: Account {} has balance {}, required {}",
+            log.info("Transfer failed due to insufficient funds: Account {} has balance {}, required {}",
                     sourceAccNum, sourceAccount.getBalance(), billedAmount);
 
             Transaction insufficientFundTx = Transaction.builder()
