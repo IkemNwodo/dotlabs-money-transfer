@@ -10,11 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transfer_otp_sessions", indexes = {
-    @Index(name = "idx_otp_session_id", columnList = "sessionId", unique = true),
-    @Index(name = "idx_otp_username", columnList = "username"),
-    @Index(name = "idx_otp_status", columnList = "status")
-})
+@Table(name = "transfer_otp_sessions")
 @Getter
 @Setter
 @NoArgsConstructor

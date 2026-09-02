@@ -1,10 +1,10 @@
 package com.dotlabs.moneytransfer.service;
 
 import com.dotlabs.moneytransfer.dto.response.CommissionAnalysisResponse;
-import com.dotlabs.moneytransfer.entity.Transaction;
 import com.dotlabs.moneytransfer.enums.TransactionStatus;
 import com.dotlabs.moneytransfer.repository.TransactionRepository;
 import com.dotlabs.moneytransfer.service.impl.CommissionServiceImpl;
+import com.dotlabs.moneytransfer.util.FeeCalculator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,61 +30,44 @@ class CommissionServiceTest {
     private CommissionServiceImpl commissionService;
 
     @Test
-    @DisplayName("Should evaluate successful transactions and assign 20% commission on fee")
+    @DisplayName("Should evaluate successful transactions and assign 20% commission on fee via DB bulk operations")
     void testCommissionAnalysisJob() {
-        Transaction tx1 = Transaction.builder()
-                .id(1L)
-                .transactionReference("TX-1")
-                .amount(new BigDecimal("1000.00"))
-                .transactionFee(new BigDecimal("5.00")) // 20% = 1.00
-                .status(TransactionStatus.SUCCESSFUL)
-                .commissionWorthy(null)
-                .build();
+        when(transactionRepository.calculateTotalCommissionForPending(
+                eq(TransactionStatus.SUCCESSFUL),
+                eq(FeeCalculator.COMMISSION_PERCENTAGE)
+        )).thenReturn(new BigDecimal("21.00"));
 
-        Transaction tx2 = Transaction.builder()
-                .id(2L)
-                .transactionReference("TX-2")
-                .amount(new BigDecimal("20000.00"))
-                .transactionFee(new BigDecimal("100.00")) // 20% = 20.00
-                .status(TransactionStatus.SUCCESSFUL)
-                .commissionWorthy(null)
-                .build();
+        when(transactionRepository.evaluateCommissionForSuccessfulTransactions(
+                eq(TransactionStatus.SUCCESSFUL),
+                eq(FeeCalculator.COMMISSION_PERCENTAGE),
+                any(LocalDateTime.class)
+        )).thenReturn(2);
 
-        Transaction failedTx = Transaction.builder()
-                .id(3L)
-                .transactionReference("TX-3")
-                .amount(new BigDecimal("5000.00"))
-                .transactionFee(new BigDecimal("25.00"))
-                .status(TransactionStatus.INSUFFICIENT_FUNDS)
-                .commissionWorthy(null)
-                .build();
-
-        when(transactionRepository.findByStatusAndCommissionWorthyIsNull(TransactionStatus.SUCCESSFUL))
-                .thenReturn(List.of(tx1, tx2));
-        when(transactionRepository.findByStatusAndCommissionWorthyIsNull(TransactionStatus.INSUFFICIENT_FUNDS))
-                .thenReturn(List.of(failedTx));
-        when(transactionRepository.findByStatusAndCommissionWorthyIsNull(TransactionStatus.FAILED))
-                .thenReturn(List.of());
+        when(transactionRepository.markNonSuccessfulTransactionsNonCommissionWorthy(
+                eq(TransactionStatus.SUCCESSFUL),
+                any(LocalDateTime.class)
+        )).thenReturn(1);
 
         CommissionAnalysisResponse response = commissionService.runCommissionAnalysis();
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalAnalyzed()).isEqualTo(3);
         assertThat(response.getCommissionWorthyUpdated()).isEqualTo(2);
-        assertThat(response.getTotalCommissionCalculated()).isEqualByComparingTo("21.00"); // 1.00 + 20.00
+        assertThat(response.getTotalCommissionCalculated()).isEqualByComparingTo("21.00");
+        assertThat(response.getExecutionDurationMs()).isGreaterThanOrEqualTo(0);
 
-        // Check modified entities
-        assertThat(tx1.getCommissionWorthy()).isTrue();
-        assertThat(tx1.getCommission()).isEqualByComparingTo("1.00");
-        assertThat(tx1.getCommissionProcessedAt()).isNotNull();
-
-        assertThat(tx2.getCommissionWorthy()).isTrue();
-        assertThat(tx2.getCommission()).isEqualByComparingTo("20.00");
-
-        assertThat(failedTx.getCommissionWorthy()).isFalse();
-        assertThat(failedTx.getCommission()).isEqualByComparingTo("0.00");
-
-        verify(transactionRepository).saveAll(List.of(tx1, tx2));
-        verify(transactionRepository).saveAll(List.of(failedTx));
+        verify(transactionRepository).calculateTotalCommissionForPending(
+                eq(TransactionStatus.SUCCESSFUL),
+                eq(FeeCalculator.COMMISSION_PERCENTAGE)
+        );
+        verify(transactionRepository).evaluateCommissionForSuccessfulTransactions(
+                eq(TransactionStatus.SUCCESSFUL),
+                eq(FeeCalculator.COMMISSION_PERCENTAGE),
+                any(LocalDateTime.class)
+        );
+        verify(transactionRepository).markNonSuccessfulTransactionsNonCommissionWorthy(
+                eq(TransactionStatus.SUCCESSFUL),
+                any(LocalDateTime.class)
+        );
     }
 }

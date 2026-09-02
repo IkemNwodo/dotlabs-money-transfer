@@ -14,11 +14,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users", indexes = {
-    @Index(name = "idx_user_username", columnList = "username", unique = true),
-    @Index(name = "idx_user_email", columnList = "email", unique = true),
-    @Index(name = "idx_user_account", columnList = "accountNumber", unique = true)
-})
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
